@@ -1,0 +1,42 @@
+################     ERRORS IN INSTALLATION AND RUNNING   ###
+    serieApp = elec[appliance].power_series(sample_period=self.sample_period, resample=True).next() #pandas.core.series.Series
+  File "/data/home/gbejara1/Research/Disaggregation/UKDALE/nilmtk/nilmtk/electric.py", line 629, in load_series
+    for chunk in generator:
+  File "/data/home/gbejara1/Research/Disaggregation/UKDALE/nilmtk/nilmtk/preprocessing/apply.py", line 16, in process
+    new_chunk.timeframe = chunk.timeframe
+  File "/data/home/gbejara1/anaconda2/envs/latentVar/lib/python2.7/site-packages/pandas/tseries/resample.py", line 194, in __setattr__
+    self.__class__.__name__))
+ValueError: cannot set values on DatetimeIndexResampler
+
+But in my computer it executes this:
+/home/gissella/anaconda2/envs/neuralnilm_tensorflow/lib/python2.7/site-packages/pandas/core/generic.py(2746)__setattr__()
+
+
+IN NODE 60
+I was trying to install gpu but then realized that even the CUDA toolkit is installed, there's sth missing: 
+
+When installing theano with conda, missing to install python2x. So just copy it from somewhere
+
+Install pandas=0.19.2 Because that is the one with Period in module pd.TimeSeries (or later)
+conda install pandas=0.19.2 (otherwise also problem with pd.tseries.period.PeriodIndex)
+No module yaml, networkx, builtins:
+pip install pyyaml
+pip install networkx
+pip install future #for builtins
+pip install --upgrade IPython
+pip install matplotlib
+pip install tables # for  HDFStore requires PyTables
+
+conda install scikit-learn
+conda install -c anaconda mkl-service
+conda install -c anaconda lxml
+
+
+ValueError: cannot reindex a non-unique index with a method or limit
+#data = data.drop(['2013-09-06 09:01:46.300000'])
+data = data[~data.index.duplicated(keep='first')]
+data = data.resample(...)
+But it was weird because it was working normally with vrnn but when I run neuralnilm it gave me an error. Maybe it's something with one of the libraries on each conda environment.
+
+When trying Kelly's for each appliance alone:
+Kettle did not have any activations for unseen_activ from 2015-07-01, so I made it from 2014-07-01

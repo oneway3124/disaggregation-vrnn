@@ -1,0 +1,147 @@
+############    CHANGES DONE TO ORIGINAL CODE    ################
+
+nips2015_vrnn
+- Monitor outputs (done over validation data):
+	- Add variables to track in ddout
+	- Set indexSep to separate the track of means and whole sequences of values
+	- Plot: set indexDDoutPlot and instancesPlot in the first batch of the training set and savedFolder for path to saved pltos
+
+cle
+- cle.train.ext.py: read from the Monitor all the paramters mentioned before and plot
+- cle.utils.op.py: actually GMM_sampleY is equal to GMM_sample
+- cle.cost.__init__.py: also GMMdisag is equal to GMM for the moment
+
+
+############### RECOMMENDATIONS ###############3
+- Comment all the calls to ipdb library in spiedie: 
+find /data/home/gbejara1/Documents/Research/Disaggregation/UK-DALE/VRNN_theano_version/models -type f -exec sed -i 's/import ipdb/# import ipdb/g' {} \;
+find /data/home/gbejara1/Documents/Research/Disaggregation/UK-DALE/VRNN_theano_version/datasets -type f -exec sed -i 's/import ipdb/# import ipdb/g' {} \;
+(the find command is harmful because it corrupts the repository)
+
+(no harm in repository) git grep -l 'import ipdb' | xargs sed -i 's/import ipdb/#import ipdb/g'
+git grep -l 'VRNN_theano_version.datasets' | xargs sed -i 's/VRNN_theano_version.datasets/preprocessing/g'
+
+- When compiler complaining about matplotlib:
+	import matplotlib.pyplot as plt
+	plt.switch_backend('agg')
+	plt.close('all')
+
+
+###########   ERRORS IN INSTALLATION AND ENVIRONMENT SETTING  ################
+When installing theano with conda, missing to install python2x. So just copy it from somewhere
+
+Install pandas=0.19.2 Because that is the one with Period in module pd.TimeSeries (or later)
+conda install pandas=0.19.2 (otherwise also problem with pd.tseries.period.PeriodIndex)
+No module yaml, networkx, builtins:
+pip install pyyaml
+pip install networkx
+pip install future #for builtins
+pip install --upgrade IPython
+pip install matplotlib
+pip install tables # for  HDFStore requires PyTables
+
+conda install scikit-learn
+conda install -c anaconda mkl-service
+conda install -c anaconda lxml
+
+pandas.tools.plottings - last version of pandas moved and nilmtk/nilmtk/electric.py reflects that, so copy one previous version of electric.py
+lasagne - conda install -c toli lasagne
+copy downsample from theano.tensor.signal
+conda install -c anaconda h5py
+conda install -c anaconda pymongo
+
+###############  ERRORS RUNNING ###########################################
+
+AttributeError: 'NaTType' object has no attribute 'tz_localize'
+-> Copy again the data set file
+
+Some errors and things I noticed:
+
+Inputs shapes: [(1, 1), (20000, 1), (20000, 0), (20000, 0), (1, 1)]
+Apply node that caused the error: Elemwise{...} # 5 inputs described also in the Input types
+-> target_dim = x_dim#(x_dim-1) # it worked
+
+Input dimension mis-match. (input[0].shape[0] = 1000, input[1].shape[0] = 20)
+Apply node that caused the error: Elemwise{Mul}[(0, 0)](Reshape{2}.0, mask)
+-> #recon = recon * mask
+-> #kl_temp = kl_temp * mask
+
+ValueError: could not broadcast input array from shape (1000,200,1) into shape (1000,200)
+->others_record.append(others) # no np.asarray
+->record[numBatch][i-18]
+
+Trying to get sample_bigauss+bernoulli I'm getting some erros. I'm doing sanity check to be sure what I am sending there has the proper shapes (Reviewing _tmp and fprop functions).
+-> I realized the sample function is done for each step (it's in the scan part). I asked Kyle (2nd author) to confirm if gauss or gmm are just for the decoding but in the decoding, it's always the gauss.
+-> I added a parameter in "extension" definition to set the index that separates the mean, min, max and the real output arrays. It's called indexSep
+-> Found the gaussian_sample and gmm_sample in cle.cle.utils/op.py, so now I added a function to call them in each step of an instance that I would like to plot
+
+When I placed the sampling function in vrnn it complained about being numpy array, so I decided to move all that to the scan function. That way I could generate x in each step. It seems like it is working. 
+
+Also be sure to put in vrnn ukdale_utils in the PYTHONPATH -> /home/gissella/Documents/Research/Disaggregation/UK-DALE/VRNN_theano_version/datasets
+
+I'm getting x_reconstructed but some parts of it are negative. Think about how to solve it
+
+I could not get shape in Iterator(validation)
+-> I was working with normalize in gmm instead of none in gauss
+
+TypeError: ('Bad input argument to theano function with name
+-> trying to change the definition of Y did not work
+-> Add Y to model.inputs = [x, mask, y, y_mask]
+
+Theta_mu. Then I gave back the dimensionality of target. another error: Apply node that caused the error: Subtensor{::, int64}(Reshape{3}.0, Constant{0})
+-> Instead of recon = BiGMM() y swithc to GMM() without corr, and binary,ok
+
+ValueError: Input dimension mis-match. (input[1].shape[1] = 1, input[2].shape[1] = 0)
+-> not sure: k should be equal to target. I guess the rest can be done in th gmm_sampling where we choose 1 out of k
+
+Commenting recon * mask and kll * mask
+
+Looking for the error that did not allow me to have a different k than 1. ValueError: cannot reshape array of size 400 into shape (400,0,5)
+-> I realized that before calling BiGMM in the original code, they do a reshape, outside the scan. I did it in SCAN taking shape of x_t but seems like it does not work. Trying outside SCAN now
+-> What is weird is that gmm alone works fine with k with any value
+
+Trying GMM_sampleYdisag where mu is not changed, just in case theta_mu is change to just 1
+Inputs shapes: [(1, 1, 1), (400000, 3, 1), (400000, 1, 5), (400000, 1, 5), (1, 1, 1)]
+-> I changed the GMM_sampleYeach for not changing shape of theta_mu but still same error
+-> it was just that I was reading x_dim instead of y_dim from config.txt
+
+The difference betwee BiGauss and BiGMM is 
+nll = -T.sum(cost ,axis=1) - c_b
+nll = -logsumexp(T.log(coeff) + cost, axis=1) - c_b
+
+
+Remember that monitoring frequency is a value that represents how many batches from training have to be seen to measure the validation set
+
+Kyle says:
+'''
+idx is to choose which of the k Gaussians to sample from - for sampling from a GMM you first sample from the multinomial (softmax) over k Gaussians (call that choice idx), then sample from the particular Gaussian selected using its mean, variance, and correlation/covariance if you have non-diagonal Gaussian structure. It is a bit involved, but the idea is the same as sampling from any GMM (ignoring the neural net part).
+
+There are many choices in this simple thing - you can use the most likely Gaussian always, but still have the sample from the Gaussian itself be stochastic (idx = argmax of coeff, then sample using the mean/variance from that Gaussian e.g. sample = mu[idx] + sqrt(var[idx]) * randn), or even most likely Gaussian, most likely point, so it is deterministic instead (idx = argmax of coeff, sample = mu[idx]). If you have correlation (as our GMM does), the sampling is a bit more complicated but that's the general idea.
+'''
+
+When modfiying the GMMdisag to work with different mu per appliance. I had this error, that seems like y was being shuffled wrongly.
+ValueError: Input dimension mis-match. (input[1].shape[1] = 1000000, input[2].shape[1] = 1)
+Apply node that caused the error: Elemwise{Composite{(i0 + (sqr((i1 - i2)) / sqr(i3)) + (i4 * log(i3)))}}(TensorConstant{(1, 1, 1) ..3787706641}, InplaceDimShuffle{x,0,1}.0, Reshape{3}.0, Reshape{3}.0, TensorConstant{(1, 1, 1) of 2.0})
+Toposort index: 166
+Inputs types: [TensorType(float64, (True, True, True)), TensorType(float32, (True, False, True)), TensorType(float64, 3D), TensorType(float64, 3D), TensorType(float64, (True, True, True))]
+Inputs shapes: [(1, 1, 1), (1, 1000000, 1), (1000000, 1, 10), (1000000, 1, 10), (1, 1, 1)]
+-> What I did was to modify a little before shuffling: y1 = y[:,0].dimshuffle(0, 'x').dimshuffle(0, 1, 'x'). it worke but not sure WHY?????????
+
+When calculating MSE, the shapes of y_pred (stacked) and y real did not match. Inputs shapes: [(1000, 800, 2, 1), (1, 800, 2, 1000)]
+-> I did dimshuffle but did not work
+->
+
+Apply node that caused the error: Elemwise{Composite{sqr((i0 - i1))}}(pred_1, InplaceDimShuffle{x,0,1}.0)
+Inputs types: [TensorType(float64, 3D), TensorType(float32, (True, False, False))]
+-> When two arguments to an element-wise operation (like addition or subtraction) have a different number of dimensions, the broadcastable pattern is expanded to the left, by padding 
+-> x[...].reshape(())
+
+slurmstepd: error: Job 3653122 exceeded memory limit (4352172 > 4194304), being killed
+If the job is allocated multiple nodes in a heterogeneous cluster, the memory limit on each node will be that of the node in the allocation with the smallest memory size
+-> There is a different interpretation of what memory means in the context of slurm and in the context of cgroups.
+
+Exception: ('The following error happened while compiling the node', DotModulo(A, s, m, A2, s2, m2), '\n', "Compilation failed (return status=1): /tmp/cc3Gqg3X.s: Assembler messages:. /tmp/cc3Gqg3X.s:2998: Error: no such instruction: `vinserti128 $0x1,%xmm0,%ymm1,%ymm0'. /tmp/cc3Gqg3X.s:3010: Error: no such instruction: `vinserti128 $0x1,%xmm1,%ymm0,%ymm0'. ", '[DotModulo(A, s, m, A2, s2, m2)]')
+-> THEANO_FLAGS="gcc.cxxflags='-march=core2'" python vrnn_gmm.py
+
+############# JUPYTER #############
+When loading jupyter notebook, it was complaining about PANDAS. So I had to uninstall it from anaconda2/bin but still. So make sure which jupyter points to your environment path

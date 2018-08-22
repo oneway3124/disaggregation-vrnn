@@ -1,0 +1,127 @@
+name: latentVar
+channels:
+- anaconda
+- conda-forge/label/rc
+- conda-forge
+- defaults
+dependencies:
+- libxslt=1.1.29=h78d5cac_6
+- lxml=4.1.0=py27hb025457_0
+- backports=1.0=py27_1
+- backports.functools_lru_cache=1.4=py27_1
+- backports.shutil_get_terminal_size=1.0.0=py_3
+- backports_abc=0.5=py27_0
+- cycler=0.10.0=py27_0
+- dbus=1.10.22=0
+- decorator=4.1.2=py27_0
+- enum34=1.1.6=py27_1
+- expat=2.2.5=0
+- fontconfig=2.12.1=6
+- freetype=2.7=2
+- functools32=3.2.3.2=py27_1
+- gettext=0.19.7=1
+- glib=2.55.0=0
+- gst-plugins-base=1.8.0=0
+- gstreamer=1.8.0=1
+- icu=58.2=0
+- ipdb=0.10.3=py27_0
+- ipython=5.5.0=py27_0
+- ipython_genutils=0.2.0=py27_0
+- jpeg=9b=2
+- libiconv=1.15=0
+- libpng=1.6.28=2
+- libxcb=1.12=1
+- libxml2=2.9.5=2
+- pathlib2=2.3.0=py27_0
+- pcre=8.39=0
+- pexpect=4.3.0=py27_0
+- pickleshare=0.7.4=py27_0
+- prompt_toolkit=1.0.15=py27_0
+- ptyprocess=0.5.2=py27_0
+- pygments=2.2.0=py27_0
+- pyqt=5.6.0=py27_4
+- python-dateutil=2.6.1=py27_0
+- qt=5.6.2=3
+- scandir=1.6=py27_0
+- simplegeneric=0.8.1=py27_0
+- singledispatch=3.4.0.3=py27_0
+- sip=4.18=py27_1
+- six=1.11.0=py27_1
+- ssl_match_hostname=3.5.0.1=py27_1
+- subprocess32=3.2.7=py27_0
+- tk=8.5.19=2
+- tornado=4.5.2=py27_0
+- traitlets=4.3.2=py27_0
+- wcwidth=0.1.7=py27_0
+- xorg-libxau=1.0.8=3
+- xorg-libxdmcp=1.1.2=3
+- xz=5.2.3=0
+- matplotlib=2.1.0rc1=py27_0
+- alabaster=0.7.10=py27he5a193a_0
+- asn1crypto=0.22.0=py27h94ebe91_1
+- babel=2.5.0=py27h20693cd_0
+- ca-certificates=2017.08.26=h1d4fec5_0
+- certifi=2017.7.27.1=py27h9ceb091_0
+- cffi=1.10.0=py27hf1aaaf4_1
+- chardet=3.0.4=py27hfa10054_1
+- cryptography=2.0.3=py27hea39389_1
+- docutils=0.14=py27hae222c1_0
+- hdf5=1.8.9=1
+- idna=2.6=py27h5722d68_1
+- imagesize=0.7.1=py27hd17bf80_0
+- intel-openmp=2018.0.0=h15fc484_7
+- ipaddress=1.0.18=py27h337fd85_0
+- jinja2=2.9.6=py27h82327ae_1
+- libedit=3.1=heed3624_0
+- libffi=3.2.1=hd88cf55_4
+- libgcc-ng=7.2.0=h7cc24e2_2
+- libgfortran=1.0=0
+- libgfortran-ng=7.2.0=h9f7466a_2
+- libgpuarray=0.6.9=0
+- libstdcxx-ng=7.2.0=h7a57d05_2
+- mako=1.0.7=py27h3d58d4b_0
+- markupsafe=1.0=py27h97b2822_1
+- mkl=2018.0.0=hb491cac_4
+- mkl-service=1.1.2=py27hb2d42c5_4
+- ncurses=6.0=h9df7e31_2
+- nose=1.3.7=py27heec2199_2
+- numexpr=2.6.2=py27h9521900_2
+- numpy=1.12.1=py27h9378851_1
+- openssl=1.0.2m=h26d622b_1
+- pandas=0.19.2=np112py27_1
+- pip=9.0.1=py27ha730c48_4
+- pycparser=2.18=py27hefa08c5_1
+- pydot-ng=1.0.0.15=py27_0
+- pygpu=0.6.9=py27_0
+- pyopenssl=17.2.0=py27h189ff3b_0
+- pyparsing=2.2.0=py27hf1513f8_1
+- pysocks=1.6.7=py27he2db6d2_1
+- python=2.7.11=0
+- pytz=2017.2=py27hcac29fa_1
+- readline=6.2=2
+- requests=2.18.4=py27hc5b0589_1
+- scipy=1.0.0=py27hf5f0f52_0
+- setuptools=36.5.0=py27h68b189e_0
+- snowballstemmer=1.2.1=py27h44e2768_0
+- sphinx=1.6.3=py27hf9b1778_0
+- sphinxcontrib=1.0=py27h1512b58_1
+- sphinxcontrib-websupport=1.0.1=py27hf906f22_1
+- sqlite=3.20.1=hb898158_2
+- theano=0.8.2=py27_0
+- typing=3.6.2=py27h66f49e2_0
+- urllib3=1.22=py27ha55213b_0
+- wheel=0.29.0=py27h411dd7b_1
+- zlib=1.2.11=ha838bed_2
+- pip:
+  - backports-abc==0.5
+  - backports.functools-lru-cache==1.4
+  - backports.shutil-get-terminal-size==1.0.0
+  - backports.ssl-match-hostname==3.5.0.1
+  - future==0.16.0
+  - ipython-genutils==0.2.0
+  - networkx==2.0
+  - prompt-toolkit==1.0.15
+  - pyyaml==3.12
+  - tables==3.4.2
+prefix: /home/gissella/anaconda2/envs/latentVar
+

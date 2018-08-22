@@ -1,0 +1,24 @@
+building 1
+[Appliance(type='washer dryer', instance=1), Appliance(type='light', instance=3), Appliance(type='breadmaker', instance=1), Appliance(type='broadband router', instance=2), Appliance(type='radio', instance=3), Appliance(type='light', instance=15), Appliance(type='ethernet switch', instance=1), Appliance(type='desktop computer', instance=1), Appliance(type='fan', instance=1), Appliance(type='charger', instance=1), Appliance(type='hair straighteners', instance=1), Appliance(type='fan', instance=2), Appliance(type='laptop computer', instance=1), Appliance(type='wireless phone charger', instance=1), Appliance(type='tablet computer charger', instance=1), Appliance(type='vacuum cleaner', instance=1), Appliance(type='hair dryer', instance=1), Appliance(type='soldering iron', instance=1), Appliance(type='light', instance=14), Appliance(type='baby monitor', instance=1), Appliance(type='mobile phone charger', instance=2), Appliance(type='USB hub', instance=1), Appliance(type='immersion heater', instance=1), Appliance(type='food processor', instance=1), Appliance(type='washer dryer', instance=2), Appliance(type='baby monitor', instance=2), Appliance(type='light', instance=10), Appliance(type='audio system', instance=2), Appliance(type='light', instance=16), Appliance(type='water pump', instance=1), Appliance(type='audio amplifier', instance=1), Appliance(type='laptop computer', instance=2), Appliance(type='toasted sandwich maker', instance=1), Appliance(type='bouncy castle pump', instance=1), Appliance(type='light', instance=11), Appliance(type='coffee maker', instance=1), Appliance(type='light', instance=13), Appliance(type='kettle', instance=1), Appliance(type='HTPC', instance=1), Appliance(type='kitchen aid', instance=1), Appliance(type='security alarm', instance=1), Appliance(type='light', instance=2), Appliance(type='radio', instance=1), Appliance(type='light', instance=9), Appliance(type='solar thermal pumping station', instance=1), Appliance(type='microwave', instance=1), Appliance(type='toaster', instance=1), Appliance(type='mobile phone charger', instance=1), Appliance(type='light', instance=5), Appliance(type='drill', instance=1), Appliance(type='light', instance=7), Appliance(type='computer monitor', instance=1), Appliance(type='light', instance=12), Appliance(type='audio system', instance=1), Appliance(type='dish washer', instance=1), Appliance(type='light', instance=1), Appliance(type='light', instance=6), Appliance(type='broadband router', instance=1), Appliance(type='boiler', instance=1), Appliance(type='light', instance=8), Appliance(type='printer', instance=1), Appliance(type='laptop computer', instance=3), Appliance(type='television', instance=1), Appliance(type='external hard disk', instance=1), Appliance(type='active subwoofer', instance=1), Appliance(type='food processor', instance=2), Appliance(type='light', instance=4), Appliance(type='radio', instance=2), Appliance(type='fridge freezer', instance=1), Appliance(type='oven', instance=1), Appliance(type='computer', instance=1), Appliance(type='clothes iron', instance=1)]
+
+washer dryer
+light
+breadmaker
+broadband router
+radio
+light
+ethernet switch
+desktop computer
+fan
+charger
+hair straighteners
+fan
+laptop computer
+wireless phone charger
+tablet computer charger
+vacuum cleaner
+hair dryer
+soldering iron
+
+
+building 2

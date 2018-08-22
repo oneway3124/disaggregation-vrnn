@@ -1,0 +1,71 @@
+
+2012-02 to 2017-03
+
+Kettle
+- days with no data imperceptible, just 2012-12
+
+Microwave
+- days with no data imperceptible, just 2016-06
+
+Washing Machine
+- days with no data imperceptible.
+- Around 2015-06 approximately, seems to be another machine (avg 3500, later 2500)
+
+Dish Washer
+- days with no data more perceptible (5)
+
+Fridge
+- days with no data imperceptible
+- Like 17 outliers
+
+
+
+2013-02 to 2015-02
+
+Kettle
+- Most secure 2013-08 to 2013-12
+- Seems like few days with no data (7). Vacations?
+- When 'OFF' it consumes 1
+
+Microwave
+- Most secure 2013-08 to 2013-12
+- Seems like few days with no data (7)
+- From 2014-08 seems to be another microwave (Avg 1600, later 2500)
+
+Washing machine
+- Most secure 2013-08 to 2013-12
+- Seems like few days with no data (7)
+
+Dish Washer
+- Most secure 2013-08 to 2013-12
+- Seems like few days with no data (7)
+
+Fridge
+- No blank spaces
+- Outliers (5) maybe because of cleaning
+
+appliance: kettle
+((47790, 200), (23891, 200), (23890, 200), (47790, 200), (23891, 200), (23890, 200))
+(47790, 46332)
+(23891, 23719)
+(23890, 23776)
+appliance: microwave
+((31863, 300), (15927, 300), (15926, 300), (31863, 300), (15927, 300), (15926, 300))
+(31863, 31194)
+(15927, 15554)
+(15926, 15908)
+appliance: washing machine
+((8696, 1100), (4344, 1100), (4343, 1100), (8696, 1100), (4344, 1100), (4343, 1100))
+(8696, 1416)
+(4344, 647)
+(4343, 723)
+appliance: dish washer
+((5981, 1600), (2986, 1600), (2985, 1600), (5981, 1600), (2986, 1600), (2985, 1600))
+(5981, 5494)
+(2986, 2701)
+(2985, 2705)
+appliance: fridge
+((15936, 600), (7964, 600), (7963, 600), (15936, 600), (7964, 600), (7963, 600))
+(15936, 15621)
+(7964, 7959)
+(7963, 7948)

@@ -1,0 +1,17 @@
+trial 1
+data_path /home/gissella/Documents/Research/Disaggregation/REDD/datasets
+save_path /home/gissella/Documents/Research/Disaggregation/REDD/VRNN_theano_version/output
+sample_path /home/gissella/Documents/Research/Disaggregation/REDD/VRNN_theano_version/output
+monitoring_freq 200
+epoch 2
+batch_size 400
+x_dim 1
+z_dim 10
+num_k 1
+rnn_dim 20
+lr 0.003
+debug 1
+period 6
+n_steps 1000
+stride_train 100
+stride_test 1000
