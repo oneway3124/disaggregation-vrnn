@@ -31,8 +31,8 @@ from cle.cle.utils.compat import OrderedDict
 from cle.cle.utils.op import Gaussian_sample, GMM_sample
 from cle.cle.utils.gpu_op import concatenate
 
-from VRNN_theano_version.datasets.dataport import Dataport
-from VRNN_theano_version.datasets.dataport_utils import fetch_dataport
+from preprocessing.dataport import Dataport
+from preprocessing.dataport_utils import fetch_dataport
 
 building = 2859
 appliances = ['air1', 'furnace1', 'refrigerator1',  'clotheswasher1','drye1','dishwasher1', 'kitchenapp1', 'microwave1']
