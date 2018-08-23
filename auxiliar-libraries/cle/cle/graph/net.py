@@ -1,4 +1,4 @@
-import ipdb
+#import ipdb
 import theano
 
 from collections import OrderedDict

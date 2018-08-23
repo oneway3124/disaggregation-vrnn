@@ -79,9 +79,9 @@ def fetch_dataport(data_path, windows, appliances, numApps, period, n_steps, str
                         flgScaling=0, trainPer=trainPer, valPer=valPer, testPer=testPer)
 
     if (numApps==-1):
-        truFileName='all_'+str(n_steps)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_te'+str(valPer)+'_b'+str(windows.keys())
+        truFileName='all_'+str(n_steps)+'_tr'+str(trainPer)+'_te'+str(valPer)+'_te'+str(testPer)+'_b'+str(windows.keys())
     else:
-        truFileName=appliances[numApps]+'_'+str(n_steps)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_te'+str(valPer)+'_b'+str(len(windows))#+'_'+str(windows[0][0])+'_'+str(windows[0][1])
+        truFileName=appliances[numApps]+'_'+str(n_steps)+'_tr'+str(trainPer)+'_te'+str(valPer)+'_te'+str(testPer)+'_b'+str(len(windows))#+'_'+str(windows[0][0])+'_'+str(windows[0][1])
     try:
         split = pickle.load( open(data_path+"/pickles/"+truFileName+".pickle","rb"))
         print(split['X_train'].shape,  split['Y_train'].shape, split['X_val'].shape, split['Y_val'].shape, split['X_test'].shape, split['Y_test'].shape)

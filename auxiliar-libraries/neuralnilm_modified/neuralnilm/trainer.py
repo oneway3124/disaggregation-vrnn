@@ -406,7 +406,7 @@ class Trainer(object):
         # Handle input
         for selection in selection_str:
             if selection == 'd':
-                import ipdb
+                #import ipdb
                 ipdb.set_trace()
             elif selection == 's':
                 self.net.save()
