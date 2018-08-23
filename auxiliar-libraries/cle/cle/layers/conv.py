@@ -1,4 +1,4 @@
-import ipdb
+#import ipdb
 import theano.tensor as T
 
 from cle.cle.layers import StemCell

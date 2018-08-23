@@ -9,12 +9,14 @@ import os
 import matplotlib.pyplot as plt
 plt.switch_backend('PS')
 import pickle
+
 from cle.cle.cost import BiGMM, KLGaussianGaussian, GMMdisagMulti
 from cle.cle.data import Iterator
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import LSTM
+
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -89,7 +91,7 @@ def main(args):
     model = Model()
     Xtrain, ytrain, Xval, yval, Xtest,ytest, reader = fetch_dataport(data_path, windows, appliances,numApps=-1, period=period,
                                               n_steps= n_steps, stride_train = stride_train, stride_test = stride_test,
-                                              trainPer=0.5, valPer=0.25, testPer=0.25, typeLoad = loadType,
+                                              trainPer=0.75, valPer=0.25, testPer=0.0, typeLoad = loadType,
                                               flgAggSumScaled = 1, flgFilterZeros = 1)
 
     print("Mean ",reader.meanTrain)
@@ -912,11 +914,11 @@ def main(args):
     totaMAE = (mae1+mae2+mae3+mae4+mae5+mae6+mae7+mae8)/y_dim
     totaMAE.name = 'mae'
 
-    '''
-    y_pred_temp = T.stack([y_pred1_temp, y_pred2_temp, y_pred3_temp, y_pred4_temp], axis=2) 
-    y_pred_temp = y_pred_temp.flatten(3)# because of the stack, i guess, there's a 4th dimension created
-    mse = T.mean((y_pred_temp - y.reshape((y.shape[0], y.shape[1],-1)))**2) # cause mse can be 26000
-    '''
+    
+    #y_pred_temp = T.stack([y_pred1_temp, y_pred2_temp, y_pred3_temp, y_pred4_temp], axis=2) 
+    #y_pred_temp = y_pred_temp.flatten(3)# because of the stack, i guess, there's a 4th dimension created
+    #mse = T.mean((y_pred_temp - y.reshape((y.shape[0], y.shape[1],-1)))**2) # cause mse can be 26000
+    
     #corr_in = corr_temp.reshape((x_shape[0]*x_shape[1], -1))
     #binary_in = binary_temp.reshape((x_shape[0]*x_shape[1], -1))
 
@@ -924,10 +926,6 @@ def main(args):
     recon = recon.reshape((x_shape[0], x_shape[1]))
     recon.name = 'gmm_out'
 
-    '''
-    recon5 = GMM(y_in[:,4, None], theta_mu5_in, theta_sig5_in, coeff5_in)
-    recon5 = recon.reshape((x_shape[0], x_shape[1]))    
-    '''
     recon_term = recon.sum(axis=0).mean()
     recon_term = recon.sum(axis=0).mean()
     recon_term.name = 'recon_term'
@@ -999,23 +997,6 @@ def main(args):
     mse8_val = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
     mae8_val = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
 
-    '''
-    mse2_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse3_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse4_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse5_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse6_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse7_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mse8_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-
-    mae2_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae3_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae4_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae5_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae6_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae7_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    mae8_valUnNorm = T.mean(T.zeros((y.shape[0],y.shape[1],1)))
-    '''
 
     relErr2_val = T.zeros((1,))
     relErr3_val = T.zeros((1,))
@@ -1285,10 +1266,7 @@ def main(args):
     totaMSE_val = totaMSE_val/y_dim
     totaMAE_val = totaMAE_val/y_dim
 
-    '''
-    recon5 = GMM(y_in[:,4, None], theta_mu5_in, theta_sig5_in, coeff5_in)
-    recon5 = recon.reshape((x_shape[0], x_shape[1]))    
-    '''
+
     recon_term_val = recon_val.sum(axis=0).mean()
     recon_term_val = recon_val.sum(axis=0).mean()
     recon_term_val.name = 'recon_term'
@@ -1410,31 +1388,6 @@ def main(args):
 
     print(testOutput[:,3:11].mean(),testOutput[:,11:19].mean())
 
-    '''
-    mse1_valUnNorm =  testOutput[:, 19].mean()
-    mse2_valUnNorm =  testOutput[:, 20].mean()
-    mse3_valUnNorm =  testOutput[:, 21].mean()
-    mse4_valUnNorm =  testOutput[:, 22].mean()
-    mse5_valUnNorm =  testOutput[:, 23].mean()
-    mse6_valUnNorm =  testOutput[:, 24].mean()
-    mse7_valUnNorm =  testOutput[:, 25].mean()
-    mse8_valUnNorm =  testOutput[:, 26].mean()
-
-    mseUnNormAvg_0=(mse1_valUnNorm+mse2_valUnNorm+mse3_valUnNorm+mse4_valUnNorm+mse5_valUnNorm+mse6_valUnNorm+mse7_valUnNorm+mse8_valUnNorm)/y_dim
-    print(mseUnNormAvg_0)
-    mseUnNormAvg = testOutput[:, 19:27].mean()
-
-    mae1_valUnNorm =  testOutput[:, 27].mean()
-    mae2_valUnNorm =  testOutput[:, 28].mean()
-    mae3_valUnNorm =  testOutput[:, 29].mean()
-    mae4_valUnNorm =  testOutput[:, 30].mean()
-    mae5_valUnNorm =  testOutput[:, 31].mean()
-    mae6_valUnNorm =  testOutput[:, 32].mean()
-    mae7_valUnNorm =  testOutput[:, 33].mean()
-    mae8_valUnNorm =  testOutput[:, 34].mean()
-
-    maeUnNormAvg = testOutput[:, 27:].mean()
-    '''
     relErr1_test = testMetrics2[:,0].mean()
     relErr2_test = testMetrics2[:,1].mean()
     relErr3_test = testMetrics2[:,2].mean()

@@ -1,4 +1,4 @@
-import ipdb
+#import ipdb
 import numpy as np
 
 from theano import tensor
