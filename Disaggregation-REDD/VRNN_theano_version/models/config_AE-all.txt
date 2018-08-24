@@ -1,7 +1,7 @@
 trial 1
-data_path /home/gissella/Documents/Research/Disaggregation/REDD/datasets
-save_path /home/gissella/Documents/Research/Disaggregation/REDD/VRNN_theano_version/output
-sample_path /home/gissella/Documents/Research/Disaggregation/REDD/VRNN_theano_version/output
+data_path ../../datasets
+save_path ../output
+sample_path ../output
 flgMSE 0
 monitoring_freq 70
 epoch 1

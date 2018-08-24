@@ -1386,8 +1386,6 @@ def main(args):
     mse8_test =  testOutput[:, 10].mean()
     mae8_test =  testOutput[:, 18].mean()
 
-    print(testOutput[:,3:11].mean(),testOutput[:,11:19].mean())
-
     relErr1_test = testMetrics2[:,0].mean()
     relErr2_test = testMetrics2[:,1].mean()
     relErr3_test = testMetrics2[:,2].mean()

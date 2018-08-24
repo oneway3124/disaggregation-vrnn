@@ -1,0 +1,5 @@
+Applay preprocessing from https://github.com/smakonin/DataWrangle_REDD
+Then the preprocessing part uses those .csv
+When runing ./write_redd_test.sh houses 4 and 5 have errors:
+- 4: KeyError: "[' MICR' ' REFG'] not in index"
+- 5: No such file or directory: '../data/consumption_stats/redd/train/home_5/stats.pkl' because they are not in /home/gissella/Documents/Research/Disaggregation/REDD/Disambiguating/linqs-appliance_disambiguation_0/data/consumption_stats/redd/train
