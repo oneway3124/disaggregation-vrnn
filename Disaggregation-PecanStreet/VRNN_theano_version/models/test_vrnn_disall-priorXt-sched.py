@@ -33,12 +33,12 @@ from cle.cle.utils.compat import OrderedDict
 from cle.cle.utils.op import Gaussian_sample, GMM_sample, GMM_sampleY
 from cle.cle.utils.gpu_op import concatenate
 
-from VRNN_theano_version.datasets.dataport import Dataport
-from VRNN_theano_version.datasets.dataport_utils import fetch_dataport
+from preprocessing.dataport import Dataport
+from preprocessing.dataport_utils import fetch_dataport
 
 appliances = [ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
 #[ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
-windows = {7951:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
+windows = {2859:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
 #windows = {6990:("2015-06-01", "2015-11-01"), 2859:("2015-06-01", "2015-11-01"), 7951:("2015-06-01", "2015-11-01"),8292:("2015-06-01",  "2015-11-01"),3413:("2015-06-01", "2015-11-01")}#3413:("2015-06-01", "2015-12-31")
 
 def main(args):
@@ -53,6 +53,8 @@ def main(args):
 
     data_path = args['data_path']
     save_path = args['save_path']#+'/aggVSdisag_distrib/'+datetime.datetime.now().strftime("%y-%m-%d_%H-%M")
+    pickleModel = args['pickleModel']
+
     period = int(args['period'])
     n_steps = int(args['n_steps'])
     stride_train = int(args['stride_train'])
@@ -91,7 +93,7 @@ def main(args):
     
     Xtrain, ytrain, Xval, yval, Xtest,ytest, reader = fetch_dataport(data_path, windows, appliances,numApps=-1, period=period,
                                               n_steps= n_steps, stride_train = stride_train, stride_test = stride_test,
-                                              trainPer=0.5, valPer=0.25, testPer=0.25, typeLoad = loadType,
+                                              trainPer=0.0, valPer=0.0, testPer=1.0, typeLoad = loadType,
                                               flgAggSumScaled = 1, flgFilterZeros = 1)
 
     print("Mean ",reader.meanTrain)
@@ -143,8 +145,7 @@ def main(args):
         mask.tag.test_value = temp
 
     #from experiment 18-05-31_18-48
-    pickelModel = '/home/gissella/Documents/Research/Disaggregation/PecanStreet-dataport/VRNN_theano_version/output/allAtOnce/18-06-14_21-41_7951/dp_disall-sch_1_best.pkl'
-    fmodel = open(pickelModel, 'rb')
+    fmodel = open(pickleModel, 'rb')
     mainloop = cPickle.load(fmodel)
     fmodel.close()
 
@@ -669,21 +670,6 @@ def main(args):
         lr=lr
     )
     header = "epoch,log,kl,nll_upper_bound,mse,mae\n"
-    extension = [
-        GradientClipping(batch_size=batch_size),
-        EpochCount(epoch, save_path, header),
-        Monitoring(freq=monitoring_freq,
-                   #ddout=[nll_upper_bound, recon_term, kl_term,totaMSE, totaMAE, mse1, mae1]+ddoutMSEA+ddoutYpreds ,
-                   #indexSep=indexSepDynamic,
-                   indexDDoutPlot = [13], # adding indexes of ddout for the plotting
-                   #, (6,y_pred_temp)
-                   instancesPlot = instancesPlot,#0-150
-                   data=[Iterator(valid_data, batch_size)],
-                   savedFolder = save_path),
-        Picklize(freq=monitoring_freq, path=save_path),
-        EarlyStopping(freq=monitoring_freq, path=save_path, channel=channel_name),
-        WeightNorm()
-    ]
 
     lr_iterations = {0:lr}
 
@@ -817,7 +803,7 @@ def main(args):
     fLog.write("batch,perReal1,perReal2,perReal3,perReal4,perReal5,perReal6,perReal7,perReal8,perPredict1,perPredict2,perPredict3,perPredict4,perPredict5,perPredict6,perPredict7,perPredict8\n")
     for batch, item in enumerate(perEnergyAssig):
       fLog.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(batch,item[0][0],item[0][1],item[0][2],item[0][3],item[0][4],item[0][5],item[0][6],item[0][7],item[1][0],item[1][1],item[1][2],item[1][3],item[1][4],item[1][5],item[1][6],item[1][7]))
-    fLog.write(pickelModel)
+    fLog.write(pickleModel)
     f = open(save_path+'/outputRealGeneration.pkl', 'wb')
     pickle.dump(outputGeneration, f, -1)
     f.close()

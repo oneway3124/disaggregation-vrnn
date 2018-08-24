@@ -1,7 +1,8 @@
 trial 1
-data_path /data/home/gbejara1/Documents/Research/Disaggregation/bejarano-disaggregationvrnn/Disaggregation-PecanStreet/datasets
-save_path /data/home/gbejara1/Documents/Research/Disaggregation/bejarano-disaggregationvrnn/Disaggregation-PecanStreet/VRNN_theano_version/output
-sample_path /data/home/gbejara1/Documents/Research/Disaggregation/bejarano-disaggregationvrnn/Disaggregation-PecanStreet/VRNN_theano_version/output
+pickleModel ../output/allAtOnce/18-08-23_11-25/dp_disall-sch_1_best.pkl
+data_path ../../datasets
+save_path ../output
+sample_path ../output
 flgMSE 0
 monitoring_freq 220
 epoch 200
