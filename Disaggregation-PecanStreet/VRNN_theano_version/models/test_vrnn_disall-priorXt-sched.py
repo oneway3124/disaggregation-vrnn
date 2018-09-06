@@ -38,7 +38,7 @@ from preprocessing.dataport_utils import fetch_dataport
 
 appliances = [ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
 #[ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
-windows = {2859:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
+windows = {6990:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
 #windows = {6990:("2015-06-01", "2015-11-01"), 2859:("2015-06-01", "2015-11-01"), 7951:("2015-06-01", "2015-11-01"),8292:("2015-06-01",  "2015-11-01"),3413:("2015-06-01", "2015-11-01")}#3413:("2015-06-01", "2015-12-31")
 
 def main(args):
@@ -93,7 +93,7 @@ def main(args):
     
     Xtrain, ytrain, Xval, yval, Xtest,ytest, reader = fetch_dataport(data_path, windows, appliances,numApps=-1, period=period,
                                               n_steps= n_steps, stride_train = stride_train, stride_test = stride_test,
-                                              trainPer=0.0, valPer=0.0, testPer=1.0, typeLoad = loadType,
+                                              trainPer=0.5, valPer=0.25, testPer=0.25, typeLoad = loadType,
                                               flgAggSumScaled = 1, flgFilterZeros = 1)
 
     print("Mean ",reader.meanTrain)
@@ -710,8 +710,8 @@ def main(args):
       batchMSE = np.mean(np.absolute(predTest-realTest),axis=(1,2))
       idxMin = np.argmin(batchMSE)
 
-      print(np.asarray(idxMin).reshape(1,-1)[0,:])
-      print(batchMSE[idxMin])
+      #print(np.asarray(idxMin).reshape(1,-1)[0,:])
+      #print(batchMSE[idxMin])
       for idx in np.asarray(idxMin).reshape(1,-1)[0,:]:
 
         plt.figure(1)
