@@ -168,6 +168,7 @@ class ReaderTS(object):
             train_y = bigSet[indexRandom[:indexVal]]
             val_y = bigSet[indexRandom[indexVal:indexTest]]
             test_y = bigSet[indexRandom[indexTest:]]
+            print(indexRandom[:10])
         #sum up to calculate aggregation (x)
         train_x = np.sum(train_y, axis=2)
         val_x   = np.sum(val_y, axis=2)

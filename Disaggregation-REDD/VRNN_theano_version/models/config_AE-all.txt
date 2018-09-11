@@ -1,11 +1,12 @@
 trial 1
+pickleModel ../output/allAtOnce/18-08-29_00-07/dp_disall-sch_1_best.pkl
 data_path ../../datasets
 save_path ../output
 sample_path ../output
 flgMSE 0
-monitoring_freq 70
-epoch 1
-batch_size 30
+monitoring_freq 140
+epoch 300
+batch_size 15
 x_dim 1
 y_dim 4
 z_dim 100

@@ -20,14 +20,15 @@ def fetch_redd(data_path, windows, appliances, numApps, period, n_steps, stride_
 
 
     if (numApps==-1):
-        truFileName='all_'+str(n_steps)+'_'+str(period)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_te'+str(valPer)+'_b'+str(windows.keys())
+        truFileName='all_'+str(n_steps)+'_'+str(period)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_tv'+str(valPer)+'_b'+str(windows.keys())
     else:
-        truFileName=appliances[numApps]+'_'+str(n_steps)+'_'+str(period)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_te'+str(valPer)+'_b'
+        truFileName=appliances[numApps]+'_'+str(n_steps)+'_'+str(period)+'_tr'+str(trainPer)+'_te'+str(testPer)+'_tv'+str(valPer)+'_b'
         if (typeLoad==1):
             truFileName = truFileName+'_b'+str(windows['train'].keys())#+'_'+str(windows[0][0])+'_'+str(windows[0][1])
         else:
             truFileName = truFileName+'_b'+str(windows.keys())
     try:
+        print(truFileName)
         split = pickle.load( open(data_path+"/pickles/"+truFileName+".pickle","rb"))
         return split['X_train'], split['Y_train'], split['X_val'], split['Y_val'], split['X_test'], split['Y_test'], reader
     except (OSError, IOError) as e:

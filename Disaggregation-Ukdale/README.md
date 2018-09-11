@@ -12,6 +12,7 @@
 
 - It runs with python2.7
 - It is strongly recommended to work on a conda environment and install all the neccesary libraries there to be able to run with the same settings in spiedie or any other server.
+- Dataset can be found: http://data.ukedc.rl.ac.uk/simplebrowse/edc/efficiency/residential/EnergyConsumption/Domestic/UK-DALE-2017/UK-DALE-FULL-disaggregated
 - It's assumed that you can make a reference to the Tensorflow, NEURALNILM (nilmtk/nilmtk/electric.py: getAllValues()) and NILMTK libraries. Now: The generator powerSeriesAll() is used in order to get the pd.Series with the signal. To get all the data directly instead of the objects, dictionaries and rest of structures that nilmtk works with. Example:
 
 	export PYTHONPATH=/home/gissella/Documents/Research/Disaggregation/UK-DALE/neuralnilm:/home/gissella/Documents/Research/Disaggregation/UK-DALE/nilmtk:/home/gissella/Documents/Research/Disaggregation/UK-DALE/nilm_metadata

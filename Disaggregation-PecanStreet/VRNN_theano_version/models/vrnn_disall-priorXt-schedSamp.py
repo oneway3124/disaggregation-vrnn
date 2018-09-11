@@ -3,7 +3,6 @@ import numpy as np
 import theano
 import theano.typed_list as TL
 import theano.tensor as T
-import datetime
 import shutil
 import os
 import matplotlib.pyplot as plt
@@ -34,64 +33,32 @@ from cle.cle.utils.gpu_op import concatenate
 
 from preprocessing.dataport import Dataport
 from preprocessing.dataport_utils import fetch_dataport
+from ConfigParser import ConfigParser
+from utils import HyperParams #for argument usage
 
 appliances = [ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
 #[ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
 #windows = {8292:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
-windows = {6990:("2015-06-01", "2015-11-01"), 7951:("2015-06-01", "2015-11-01"),8292:("2015-06-01",  "2015-11-01"),3413:("2015-06-01", "2015-11-01")}#3413:("2015-06-01", "2015-12-31")
+windows = {6990:("2015-01-01", "2016-01-01")}#3413:("2015-06-01", "2015-12-31")
 
 def main(args):
     
     theano.optimizer='fast_compile'
     #theano.config.exception_verbosity='high'
     
-
-    trial = int(args['trial'])
-    pkl_name = 'dp_disall-sch_%d' % trial
-    channel_name = 'mae'
-
-    data_path = args['data_path']
-    save_path = args['save_path']#+'/aggVSdisag_distrib/'+datetime.datetime.now().strftime("%y-%m-%d_%H-%M")
-    period = int(args['period'])
-    n_steps = int(args['n_steps'])
-    stride_train = int(args['stride_train'])
-    stride_test = int(args['stride_test'])
-    loadType = int(args['loadType'])
-
-    flgMSE = int(args['flgMSE'])
-    monitoring_freq = int(args['monitoring_freq'])
-    epoch = int(args['epoch'])
-    batch_size = int(args['batch_size'])
-    x_dim = int(args['x_dim'])
-    y_dim = int(args['y_dim'])
-    z_dim = int(args['z_dim'])
-    rnn_dim = int(args['rnn_dim'])
-    k = int(args['num_k']) #a mixture of K Gaussian functions
-    lr = float(args['lr'])
-    origLR = lr
-    debug = int(args['debug'])
-    kSchedSamp = int(args['kSchedSamp'])
-    typeActivFunc = args['typeActivFunc']
-
-    print "trial no. %d" % trial
-    print "batch size %d" % batch_size
-    print "learning rate %f" % lr
+    pkl_name = 'dp_disall-sch_1' # %d trial
     print "saving pkl file '%s'" % pkl_name
-    print "to the save path '%s'" % save_path
     print(str(windows))
 
-    q_z_dim = 500
-    p_z_dim = 500
-    p_x_dim = 500
-    x2s_dim = 200
-    y2s_dim = 200
-    z2s_dim = 200
-    target_dim = k# As different appliances are separeted in theta_mu1, theta_mu2, etc... each one is just created from k different Gaussians
+    channel_name = 'mae'
 
-    model = Model()
-    Xtrain, ytrain, Xval, yval, Xtest,ytest, reader = fetch_dataport(data_path, windows, appliances,numApps=-1, period=period,
-                                              n_steps= n_steps, stride_train = stride_train, stride_test = stride_test,
-                                              trainPer=0.75, valPer=0.25, testPer=0.0, typeLoad = loadType,
+    k = args.k_target_dim # 
+    origLR = args.lr
+    lr_iterations = {0:args.lr, 40:(args.lr/10)}
+
+    Xtrain, ytrain, Xval, yval, Xtest,ytest, reader = fetch_dataport(args.data_path, windows, appliances,numApps=-1, period=args.period,
+                                              n_steps= args.n_steps, stride_train = args.stride_train, stride_test = args.stride_test,
+                                              trainPer=0.5, valPer=0.25, testPer=0.25, typeLoad = args.loadType,
                                               flgAggSumScaled = 1, flgFilterZeros = 1)
 
     print("Mean ",reader.meanTrain)
@@ -136,40 +103,35 @@ def main(args):
 
     x.name = 'x_original'
 
-    if debug:
-        x.tag.test_value = np.zeros((15, batch_size, x_dim), dtype=np.float32)
-        temp = np.ones((15, batch_size), dtype=np.float32)
-        temp[:, -2:] = 0.
-        mask.tag.test_value = temp
 
     x_1 = FullyConnectedLayer(name='x_1',
                               parent=['x_t'],
-                              parent_dim=[x_dim],
-                              nout=x2s_dim,
+                              parent_dim=[args.x_dim],
+                              nout=args.x2s_dim,
                               unit='relu',
                               init_W=init_W,
                               init_b=init_b)
 
     y_1 = FullyConnectedLayer(name='y_1',
                               parent=['y_t'],
-                              parent_dim=[y_dim],
-                              nout=y2s_dim,
+                              parent_dim=[args.y_dim],
+                              nout=args.y2s_dim,
                               unit='relu',
                               init_W=init_W,
                               init_b=init_b)
 
     z_1 = FullyConnectedLayer(name='z_1',
                               parent=['z_t'],
-                              parent_dim=[z_dim],
-                              nout=z2s_dim,
+                              parent_dim=[args.z_dim],
+                              nout=args.z2s_dim,
                               unit='relu',
                               init_W=init_W,
                               init_b=init_b)
 
     rnn = LSTM(name='rnn',
                parent=['x_1', 'z_1', 'y_1'],
-               parent_dim=[x2s_dim, z2s_dim, y2s_dim],
-               nout=rnn_dim,
+               parent_dim=[args.x2s_dim, args.z2s_dim, args.y2s_dim],
+               nout=args.rnn_dim,
                unit='tanh',
                init_W=init_W,
                init_U=init_U,
@@ -177,24 +139,24 @@ def main(args):
 
     phi_1 = FullyConnectedLayer(name='phi_1',
                                 parent=['x_1', 's_tm1','y_1'],
-                                parent_dim=[x2s_dim, rnn_dim, y2s_dim],
-                                nout=q_z_dim,
+                                parent_dim=[args.x2s_dim, args.rnn_dim, args.y2s_dim],
+                                nout=args.q_z_dim,
                                 unit='relu',
                                 init_W=init_W,
                                 init_b=init_b)
 
     phi_mu = FullyConnectedLayer(name='phi_mu',
                                  parent=['phi_1'],
-                                 parent_dim=[q_z_dim],
-                                 nout=z_dim,
+                                 parent_dim=[args.q_z_dim],
+                                 nout=args.z_dim,
                                  unit='linear',
                                  init_W=init_W,
                                  init_b=init_b)
 
     phi_sig = FullyConnectedLayer(name='phi_sig',
                                   parent=['phi_1'],
-                                  parent_dim=[q_z_dim],
-                                  nout=z_dim,
+                                  parent_dim=[args.q_z_dim],
+                                  nout=args.z_dim,
                                   unit='softplus',
                                   cons=1e-4,
                                   init_W=init_W,
@@ -202,24 +164,24 @@ def main(args):
 
     prior_1 = FullyConnectedLayer(name='prior_1',
                                   parent=['x_1','s_tm1'],
-                                  parent_dim=[x2s_dim,rnn_dim],
-                                  nout=p_z_dim,
+                                  parent_dim=[args.x2s_dim, args.rnn_dim],
+                                  nout=args.p_z_dim,
                                   unit='relu',
                                   init_W=init_W,
                                   init_b=init_b)
 
     prior_mu = FullyConnectedLayer(name='prior_mu',
                                    parent=['prior_1'],
-                                   parent_dim=[p_z_dim],
-                                   nout=z_dim,
+                                   parent_dim=[args.p_z_dim],
+                                   nout=args.z_dim,
                                    unit='linear',
                                    init_W=init_W,
                                    init_b=init_b)
 
     prior_sig = FullyConnectedLayer(name='prior_sig',
                                     parent=['prior_1'],
-                                    parent_dim=[p_z_dim],
-                                    nout=z_dim,
+                                    parent_dim=[args.p_z_dim],
+                                    nout=args.z_dim,
                                     unit='softplus',
                                     cons=1e-4,
                                     init_W=init_W,
@@ -227,157 +189,157 @@ def main(args):
 
     theta_1 = FullyConnectedLayer(name='theta_1',
                                   parent=['z_1', 's_tm1'],
-                                  parent_dim=[z2s_dim, rnn_dim],
-                                  nout=p_x_dim,
+                                  parent_dim=[args.z2s_dim, args.rnn_dim],
+                                  nout=args.p_x_dim,
                                   unit='relu',
                                   init_W=init_W,
                                   init_b=init_b)
 
     theta_mu1 = FullyConnectedLayer(name='theta_mu1',
                                    parent=['theta_1'],
-                                   parent_dim=[p_x_dim],
-                                   nout=target_dim,
-                                   unit=typeActivFunc,
+                                   parent_dim=[args.p_x_dim],
+                                   nout=args.k_target_dim,
+                                   unit=args.typeActivFunc,
                                    init_W=init_W,
                                    init_b=init_b)
 
-    if (y_dim>1):
+    if (args.y_dim>1):
       theta_mu2 = FullyConnectedLayer(name='theta_mu2',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>2):
+    if (args.y_dim>2):
       theta_mu3 = FullyConnectedLayer(name='theta_mu3',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>3):
+    if (args.y_dim>3):
       theta_mu4 = FullyConnectedLayer(name='theta_mu4',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>4):
+    if (args.y_dim>4):
       theta_mu5 = FullyConnectedLayer(name='theta_mu5',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>5):
+    if (args.y_dim>5):
       theta_mu6 = FullyConnectedLayer(name='theta_mu6',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>6):
+    if (args.y_dim>6):
       theta_mu7 = FullyConnectedLayer(name='theta_mu7',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
-    if (y_dim>7):
+    if (args.y_dim>7):
       theta_mu8 = FullyConnectedLayer(name='theta_mu8',
                                      parent=['theta_1'],
-                                     parent_dim=[p_x_dim],
-                                     nout=target_dim,
-                                     unit=typeActivFunc,
+                                     parent_dim=[args.p_x_dim],
+                                     nout=args.k_target_dim,
+                                     unit=args.typeActivFunc,
                                      init_W=init_W,
                                      init_b=init_b)
 
     theta_sig1 = FullyConnectedLayer(name='theta_sig1',
                                     parent=['theta_1'],
-                                    parent_dim=[p_x_dim],
-                                    nout=target_dim,
+                                    parent_dim=[args.p_x_dim],
+                                    nout=args.k_target_dim,
                                     unit='softplus',
                                     cons=1e-4,
                                     init_W=init_W,
                                     init_b=init_b_sig)
 
-    if (y_dim>1):
+    if (args.y_dim>1):
       theta_sig2 = FullyConnectedLayer(name='theta_sig2',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>2):
+    if (args.y_dim>2):
       theta_sig3 = FullyConnectedLayer(name='theta_sig3',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>3):
+    if (args.y_dim>3):
       theta_sig4 = FullyConnectedLayer(name='theta_sig4',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>4):
+    if (args.y_dim>4):
       theta_sig5 = FullyConnectedLayer(name='theta_sig5',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>5):
+    if (args.y_dim>5):
       theta_sig6 = FullyConnectedLayer(name='theta_sig6',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>6):
+    if (args.y_dim>6):
       theta_sig7 = FullyConnectedLayer(name='theta_sig7',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
                                       init_b=init_b_sig)
 
-    if (y_dim>7):
+    if (args.y_dim>7):
       theta_sig8 = FullyConnectedLayer(name='theta_sig8',
                                       parent=['theta_1'],
-                                      parent_dim=[p_x_dim],
-                                      nout=target_dim,
+                                      parent_dim=[args.p_x_dim],
+                                      nout=args.k_target_dim,
                                       unit='softplus',
                                       cons=1e-4,
                                       init_W=init_W,
@@ -385,70 +347,70 @@ def main(args):
 
     coeff1 = FullyConnectedLayer(name='coeff1',
                                 parent=['theta_1'],
-                                parent_dim=[p_x_dim],
+                                parent_dim=[args.p_x_dim],
                                 nout=k,
                                 unit='softmax',
                                 init_W=init_W,
                                 init_b=init_b)
 
-    if (y_dim>1):
+    if (args.y_dim>1):
       coeff2 = FullyConnectedLayer(name='coeff2',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>2):
+    if (args.y_dim>2):
       coeff3 = FullyConnectedLayer(name='coeff3',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>3): 
+    if (args.y_dim>3): 
       coeff4 = FullyConnectedLayer(name='coeff4',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>4):
+    if (args.y_dim>4):
       coeff5 = FullyConnectedLayer(name='coeff5',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>5):
+    if (args.y_dim>5):
       coeff6 = FullyConnectedLayer(name='coeff6',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>6):
+    if (args.y_dim>6):
       coeff7 = FullyConnectedLayer(name='coeff7',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
                                   init_b=init_b)
 
-    if (y_dim>7):
+    if (args.y_dim>7):
       coeff8 = FullyConnectedLayer(name='coeff8',
                                   parent=['theta_1'],
-                                  parent_dim=[p_x_dim],
+                                  parent_dim=[args.p_x_dim],
                                   nout=k,
                                   unit='softmax',
                                   init_W=init_W,
@@ -456,19 +418,11 @@ def main(args):
 
     corr = FullyConnectedLayer(name='corr',
                                parent=['theta_1'],
-                               parent_dim=[p_x_dim],
+                               parent_dim=[args.p_x_dim],
                                nout=k,
                                unit='tanh',
                                init_W=init_W,
                                init_b=init_b)
-
-    binary = FullyConnectedLayer(name='binary',
-                                 parent=['theta_1'],
-                                 parent_dim=[p_x_dim],
-                                 nout=1,
-                                 unit='sigmoid',
-                                 init_W=init_W,
-                                 init_b=init_b)
 
     nodes = [rnn,
              x_1, y_1,z_1, #dissag_pred,
@@ -477,25 +431,25 @@ def main(args):
              theta_1, theta_mu1, theta_sig1, coeff1]
 
     dynamicOutput = [None, None, None, None, None, None, None, None]
-    if (y_dim>1):
+    if (args.y_dim>1):
       nodes = nodes + [theta_mu2, theta_sig2, coeff2]
       dynamicOutput = dynamicOutput+[None, None, None, None] #mu, sig, coef and pred
-    if (y_dim>2):
+    if (args.y_dim>2):
       nodes = nodes + [theta_mu3, theta_sig3, coeff3]
       dynamicOutput = dynamicOutput +[None, None, None, None]
-    if (y_dim>3):
+    if (args.y_dim>3):
       nodes = nodes + [theta_mu4, theta_sig4, coeff4]
       dynamicOutput = dynamicOutput + [None, None, None, None]
-    if (y_dim>4):
+    if (args.y_dim>4):
       nodes = nodes + [theta_mu5, theta_sig5, coeff5]
       dynamicOutput = dynamicOutput + [None, None, None, None]
-    if (y_dim>5):
+    if (args.y_dim>5):
       nodes = nodes + [theta_mu6, theta_sig6, coeff6]
       dynamicOutput = dynamicOutput + [None, None, None, None]
-    if (y_dim>6):
+    if (args.y_dim>6):
       nodes = nodes + [theta_mu7, theta_sig7, coeff7]
       dynamicOutput = dynamicOutput + [None, None, None, None]
-    if (y_dim>7):
+    if (args.y_dim>7):
       nodes = nodes + [theta_mu8, theta_sig8, coeff8]
       dynamicOutput = dynamicOutput + [None, None, None, None]
 
@@ -507,7 +461,7 @@ def main(args):
 
     params = init_tparams(params)
 
-    s_0 = rnn.get_init_state(batch_size)
+    s_0 = rnn.get_init_state(args.batch_size)
 
     x_1_temp = x_1.fprop([x], params)
     y_1_temp = y_1.fprop([y], params)
@@ -535,7 +489,7 @@ def main(args):
 
         tupleMulti = prior_mu_t, prior_sig_t, theta_mu1_t, theta_sig1_t, coeff1_t, y_pred1
 
-        if (y_dim>1):
+        if (args.y_dim>1):
           theta_mu2_t = theta_mu2.fprop([theta_1_t], params)
           theta_sig2_t = theta_sig2.fprop([theta_1_t], params)
           coeff2_t = coeff2.fprop([theta_1_t], params)
@@ -543,7 +497,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred2],axis=1)
           tupleMulti = tupleMulti + (theta_mu2_t, theta_sig2_t, coeff2_t, y_pred2)
 
-        if (y_dim>2):
+        if (args.y_dim>2):
           theta_mu3_t = theta_mu3.fprop([theta_1_t], params)
           theta_sig3_t = theta_sig3.fprop([theta_1_t], params)
           coeff3_t = coeff3.fprop([theta_1_t], params)
@@ -551,7 +505,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred3],axis=1)
           tupleMulti = tupleMulti + (theta_mu3_t, theta_sig3_t, coeff3_t, y_pred3)
 
-        if (y_dim>3):
+        if (args.y_dim>3):
           theta_mu4_t = theta_mu4.fprop([theta_1_t], params)
           theta_sig4_t = theta_sig4.fprop([theta_1_t], params)
           coeff4_t = coeff4.fprop([theta_1_t], params)
@@ -559,7 +513,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred4],axis=1)
           tupleMulti = tupleMulti + (theta_mu4_t, theta_sig4_t, coeff4_t, y_pred4)
 
-        if (y_dim>4):
+        if (args.y_dim>4):
           theta_mu5_t = theta_mu5.fprop([theta_1_t], params)
           theta_sig5_t = theta_sig5.fprop([theta_1_t], params)
           coeff5_t = coeff5.fprop([theta_1_t], params)
@@ -567,7 +521,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred5],axis=1)
           tupleMulti = tupleMulti + (theta_mu5_t, theta_sig5_t, coeff5_t, y_pred5)
 
-        if (y_dim>5):
+        if (args.y_dim>5):
           theta_mu6_t = theta_mu6.fprop([theta_1_t], params)
           theta_sig6_t = theta_sig6.fprop([theta_1_t], params)
           coeff6_t = coeff6.fprop([theta_1_t], params)
@@ -575,7 +529,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred6],axis=1)
           tupleMulti = tupleMulti + (theta_mu6_t, theta_sig6_t, coeff6_t, y_pred6)
 
-        if (y_dim>6):
+        if (args.y_dim>6):
           theta_mu7_t = theta_mu7.fprop([theta_1_t], params)
           theta_sig7_t = theta_sig7.fprop([theta_1_t], params)
           coeff7_t = coeff7.fprop([theta_1_t], params)
@@ -583,7 +537,7 @@ def main(args):
           y_pred1 = T.concatenate([y_pred1, y_pred7],axis=1)
           tupleMulti = tupleMulti + (theta_mu7_t, theta_sig7_t, coeff7_t, y_pred7)
 
-        if (y_dim>7):
+        if (args.y_dim>7):
           theta_mu8_t = theta_mu8.fprop([theta_1_t], params)
           theta_sig8_t = theta_sig8.fprop([theta_1_t], params)
           coeff8_t = coeff8.fprop([theta_1_t], params)
@@ -592,7 +546,7 @@ def main(args):
           tupleMulti = tupleMulti + (theta_mu8_t, theta_sig8_t, coeff8_t, y_pred8)
 
         pred_1_t=y_1.fprop([y_pred1], params)
-        #y_pred = [GMM_sampleY(theta_mu_t[i], theta_sig_t[i], coeff_t[i]) for i in range(y_dim)]#T.stack([y_pred1,y_pred2],axis = 0 )
+        #y_pred = [GMM_sampleY(theta_mu_t[i], theta_sig_t[i], coeff_t[i]) for i in range(args.y_dim)]#T.stack([y_pred1,y_pred2],axis = 0 )
         s_t = rnn.fprop([[x_t, z_1_t, pred_1_t], [s_tm1]], params)
         #y_pred = dissag_pred.fprop([s_t], params)
 
@@ -630,7 +584,7 @@ def main(args):
 
         tupleMulti = phi_mu_t, phi_sig_t, prior_mu_t, prior_sig_t, theta_mu1_t, theta_sig1_t, coeff1_t, y_pred
 
-        if (y_dim>1):
+        if (args.y_dim>1):
           theta_mu2_t = theta_mu2.fprop([theta_1_t], params)
           theta_sig2_t = theta_sig2.fprop([theta_1_t], params)
           coeff2_t = coeff2.fprop([theta_1_t], params)
@@ -638,7 +592,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred2],axis=1)
           tupleMulti = tupleMulti + (theta_mu2_t, theta_sig2_t, coeff2_t, y_pred2)
 
-        if (y_dim>2):
+        if (args.y_dim>2):
           theta_mu3_t = theta_mu3.fprop([theta_1_t], params)
           theta_sig3_t = theta_sig3.fprop([theta_1_t], params)
           coeff3_t = coeff3.fprop([theta_1_t], params)
@@ -646,7 +600,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred3],axis=1)
           tupleMulti = tupleMulti + (theta_mu3_t, theta_sig3_t, coeff3_t, y_pred3)
 
-        if (y_dim>3):
+        if (args.y_dim>3):
           theta_mu4_t = theta_mu4.fprop([theta_1_t], params)
           theta_sig4_t = theta_sig4.fprop([theta_1_t], params)
           coeff4_t = coeff4.fprop([theta_1_t], params)
@@ -654,7 +608,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred4],axis=1)
           tupleMulti = tupleMulti + (theta_mu4_t, theta_sig4_t, coeff4_t, y_pred4)
 
-        if (y_dim>4):
+        if (args.y_dim>4):
           theta_mu5_t = theta_mu5.fprop([theta_1_t], params)
           theta_sig5_t = theta_sig5.fprop([theta_1_t], params)
           coeff5_t = coeff5.fprop([theta_1_t], params)
@@ -662,7 +616,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred5],axis=1)
           tupleMulti = tupleMulti + (theta_mu5_t, theta_sig5_t, coeff5_t, y_pred5)
 
-        if (y_dim>5):
+        if (args.y_dim>5):
           theta_mu6_t = theta_mu6.fprop([theta_1_t], params)
           theta_sig6_t = theta_sig6.fprop([theta_1_t], params)
           coeff6_t = coeff6.fprop([theta_1_t], params)
@@ -670,7 +624,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred6],axis=1)
           tupleMulti = tupleMulti + (theta_mu6_t, theta_sig6_t, coeff6_t, y_pred6)
 
-        if (y_dim>6):
+        if (args.y_dim>6):
           theta_mu7_t = theta_mu7.fprop([theta_1_t], params)
           theta_sig7_t = theta_sig7.fprop([theta_1_t], params)
           coeff7_t = coeff7.fprop([theta_1_t], params)
@@ -678,7 +632,7 @@ def main(args):
           y_pred = T.concatenate([y_pred, y_pred7],axis=1)
           tupleMulti = tupleMulti + (theta_mu7_t, theta_sig7_t, coeff7_t, y_pred7)
 
-        if (y_dim>7):
+        if (args.y_dim>7):
           theta_mu8_t = theta_mu8.fprop([theta_1_t], params)
           theta_sig8_t = theta_sig8.fprop([theta_1_t], params)
           coeff8_t = coeff8.fprop([theta_1_t], params)
@@ -753,7 +707,7 @@ def main(args):
     mse8 = T.zeros((1,))
     mae8 = T.zeros((1,))
 
-    if (y_dim>1):
+    if (args.y_dim>1):
       theta_mu2_temp, theta_sig2_temp, coeff2_temp, y_pred2_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu2_temp.name = 'theta_mu2'
@@ -776,7 +730,7 @@ def main(args):
       #totaMSE+=mse2
       indexSepDynamic +=2
 
-    if (y_dim>2):
+    if (args.y_dim>2):
       theta_mu3_temp, theta_sig3_temp, coeff3_temp, y_pred3_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu3_temp.name = 'theta_mu3'
@@ -798,7 +752,7 @@ def main(args):
       #totaMSE+=mse3
       indexSepDynamic +=2
 
-    if (y_dim>3):
+    if (args.y_dim>3):
       theta_mu4_temp, theta_sig4_temp, coeff4_temp, y_pred4_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu4_temp.name = 'theta_mu4'
@@ -820,7 +774,7 @@ def main(args):
       #totaMSE+=mse4
       indexSepDynamic +=2
 
-    if (y_dim>4):
+    if (args.y_dim>4):
       theta_mu5_temp, theta_sig5_temp, coeff5_temp, y_pred5_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu5_temp.name = 'theta_mu5'
@@ -842,7 +796,7 @@ def main(args):
       #totaMSE+=mse5
       indexSepDynamic +=2
 
-    if (y_dim>5):
+    if (args.y_dim>5):
       theta_mu6_temp, theta_sig6_temp, coeff6_temp, y_pred6_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu6_temp.name = 'theta_mu6'
@@ -864,7 +818,7 @@ def main(args):
       #totaMSE+=mse6
       indexSepDynamic +=2
 
-    if (y_dim>6):
+    if (args.y_dim>6):
       theta_mu7_temp, theta_sig7_temp, coeff7_temp, y_pred7_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu7_temp.name = 'theta_mu7'
@@ -886,7 +840,7 @@ def main(args):
       #totaMSE+=mse7
       indexSepDynamic +=2
 
-    if (y_dim>7):
+    if (args.y_dim>7):
       theta_mu8_temp, theta_sig8_temp, coeff8_temp, y_pred8_temp = restResults[:4]
       restResults = restResults[4:]
       theta_mu8_temp.name = 'theta_mu8'
@@ -908,10 +862,10 @@ def main(args):
       #totaMSE+=mse8
       indexSepDynamic +=2
 
-    totaMSE = (mse1+mse2+mse3+mse4+mse5+mse6+mse7+mse8)/y_dim
+    totaMSE = (mse1+mse2+mse3+mse4+mse5+mse6+mse7+mse8)/args.y_dim
     totaMSE.name = 'mse'
 
-    totaMAE = (mae1+mae2+mae3+mae4+mae5+mae6+mae7+mae8)/y_dim
+    totaMAE = (mae1+mae2+mae3+mae4+mae5+mae6+mae7+mae8)/args.y_dim
     totaMAE.name = 'mae'
 
     
@@ -922,7 +876,7 @@ def main(args):
     #corr_in = corr_temp.reshape((x_shape[0]*x_shape[1], -1))
     #binary_in = binary_temp.reshape((x_shape[0]*x_shape[1], -1))
 
-    recon = GMMdisagMulti(y_dim, y_in, theta_mu1_in, theta_sig1_in, coeff1_in, *argsGMM)# BiGMM(x_in, theta_mu_in, theta_sig_in, coeff_in, corr_in, binary_in)
+    recon = GMMdisagMulti(args.y_dim, y_in, theta_mu1_in, theta_sig1_in, coeff1_in, *argsGMM)# BiGMM(x_in, theta_mu_in, theta_sig_in, coeff_in, corr_in, binary_in)
     recon = recon.reshape((x_shape[0], x_shape[1]))
     recon.name = 'gmm_out'
 
@@ -935,12 +889,7 @@ def main(args):
     kl_term = kl_temp.sum(axis=0).mean()
     kl_term.name = 'kl_term'
 
-    #nll_upper_bound_0 = recon_term + kl_term
-    #nll_upper_bound_0.name = 'nll_upper_bound_0'
-    if (flgMSE==1):
-      nll_upper_bound =  recon_term + kl_term + totaMSE
-    else:
-      nll_upper_bound =  recon_term + kl_term
+    nll_upper_bound =  recon_term + kl_term
     nll_upper_bound.name = 'nll_upper_bound'
 
     ######################## TEST (GENERATION) TIME
@@ -1014,7 +963,7 @@ def main(args):
     propAssigned7_val = T.zeros((1,))
     propAssigned8_val = T.zeros((1,))
 
-    if (y_dim>1):
+    if (args.y_dim>1):
       theta_mu2_temp_val, theta_sig2_temp_val, coeff2_temp_val, y_pred2_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu2_temp_val.name = 'theta_mu2_val'
@@ -1049,7 +998,7 @@ def main(args):
       totaMAE_val+=mae2_val
       indexSepDynamic_val +=2
 
-    if (y_dim>2):
+    if (args.y_dim>2):
       theta_mu3_temp_val, theta_sig3_temp_val, coeff3_temp_val, y_pred3_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu3_temp_val.name = 'theta_mu3_val'
@@ -1085,7 +1034,7 @@ def main(args):
 
       
 
-    if (y_dim>3):
+    if (args.y_dim>3):
       theta_mu4_temp_val, theta_sig4_temp_val, coeff4_temp_val, y_pred4_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu4_temp_val.name = 'theta_mu4_val'
@@ -1119,7 +1068,7 @@ def main(args):
       totaMAE_val+=mae4_val
       indexSepDynamic_val +=2
       
-    if (y_dim>4):
+    if (args.y_dim>4):
       theta_mu5_temp_val, theta_sig5_temp_val, coeff5_temp_val, y_pred5_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu5_temp_val.name = 'theta_mu5_val'
@@ -1154,7 +1103,7 @@ def main(args):
       indexSepDynamic_val +=2
       
 
-    if (y_dim>5):
+    if (args.y_dim>5):
       theta_mu6_temp_val, theta_sig6_temp_val, coeff6_temp_val, y_pred6_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu6_temp_val.name = 'theta_mu6_val'
@@ -1189,7 +1138,7 @@ def main(args):
       totaMAE_val+=mae6_val
       indexSepDynamic_val +=2
 
-    if (y_dim>6):
+    if (args.y_dim>6):
       theta_mu7_temp_val, theta_sig7_temp_val, coeff7_temp_val, y_pred7_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu7_temp_val.name = 'theta_mu7_val'
@@ -1224,7 +1173,7 @@ def main(args):
       indexSepDynamic_val +=2
       
 
-    if (y_dim>7):
+    if (args.y_dim>7):
       theta_mu8_temp_val, theta_sig8_temp_val, coeff8_temp_val, y_pred8_temp_val = restResults_val[:4]
       restResults_val = restResults_val[4:]
       theta_mu8_temp_val.name = 'theta_mu8_val'
@@ -1260,11 +1209,11 @@ def main(args):
       indexSepDynamic_val +=2
       
 
-    recon_val = GMMdisagMulti(y_dim, y_in, theta_mu1_in_val, theta_sig1_in_val, coeff1_in_val, *argsGMM_val)# BiGMM(x_in, theta_mu_in, theta_sig_in, coeff_in, corr_in, binary_in)
+    recon_val = GMMdisagMulti(args.y_dim, y_in, theta_mu1_in_val, theta_sig1_in_val, coeff1_in_val, *argsGMM_val)# BiGMM(x_in, theta_mu_in, theta_sig_in, coeff_in, corr_in, binary_in)
     recon_val = recon_val.reshape((x_shape[0], x_shape[1]))
     recon_val.name = 'gmm_out'
-    totaMSE_val = totaMSE_val/y_dim
-    totaMAE_val = totaMAE_val/y_dim
+    totaMSE_val = totaMSE_val/args.y_dim
+    totaMAE_val = totaMAE_val/args.y_dim
 
 
     recon_term_val = recon_val.sum(axis=0).mean()
@@ -1272,49 +1221,48 @@ def main(args):
     recon_term_val.name = 'recon_term'
 
     ######################
-
+    model = Model()
     model.inputs = [x, mask, y, y_mask, scheduleSamplingMask]
     model.params = params
     model.nodes = nodes
 
     optimizer = Adam(
-        lr=lr
+        lr=args.lr
     )
     header = "epoch,log,kl,nll_upper_bound,mse,mae\n"
     extension = [
-        GradientClipping(batch_size=batch_size),
-        EpochCount(epoch, save_path, header),
-        Monitoring(freq=monitoring_freq,
+        GradientClipping(batch_size=args.batch_size),
+        EpochCount(args.epoch, args.save_path, header),
+        Monitoring(freq=args.monitoring_freq,
                    ddout=[nll_upper_bound, recon_term, kl_term,totaMSE, totaMAE, mse1, mae1]+ddoutMSEA+ddoutYpreds ,
                    indexSep=indexSepDynamic,
                    indexDDoutPlot = [13], # adding indexes of ddout for the plotting
                    #, (6,y_pred_temp)
                    instancesPlot = instancesPlot,#0-150
-                   data=[Iterator(valid_data, batch_size)],
-                   savedFolder = save_path),
-        Picklize(freq=monitoring_freq, path=save_path),
-        EarlyStopping(freq=monitoring_freq, path=save_path, channel=channel_name),
+                   data=[Iterator(valid_data, args.batch_size)],
+                   savedFolder = args.save_path),
+        Picklize(freq=args.monitoring_freq, path=args.save_path),
+        EarlyStopping(freq=args.monitoring_freq, path=args.save_path, channel=channel_name),
         WeightNorm()
     ]
 
-    lr_iterations = {0:lr, 100:(lr/10)}
 
     mainloop = Training(
         name=pkl_name,
-        data=Iterator(train_data, batch_size),
+        data=Iterator(train_data, args.batch_size),
         model=model,
         optimizer=optimizer,
         cost=nll_upper_bound,
         outputs=[nll_upper_bound],
-        n_steps = n_steps,
+        n_steps = args.n_steps,
         extension=extension,
         lr_iterations=lr_iterations,
-        k_speedOfconvergence = kSchedSamp
+        k_speedOfconvergence = args.kSchedSamp
     )
     
     mainloop.run()
 
-    data=Iterator(test_data, batch_size)
+    data=Iterator(test_data, args.batch_size)
 
     test_fn = theano.function(inputs=[x, y],#[x, y],
                               #givens={x:Xtest},
@@ -1341,7 +1289,7 @@ def main(args):
 
       plt.figure(1)
       plt.plot(np.transpose(outputGeneration[0],[1,0,2])[4])
-      plt.savefig(save_path+"/vrnn_dis_generated{}_Pred_0-4".format(numBatchTest))
+      plt.savefig(args.save_path+"/vrnn_dis_generated{}_Pred_0-4".format(numBatchTest))
       plt.clf()
 
       plt.figure(2)
@@ -1404,7 +1352,7 @@ def main(args):
     propAssigned7_test = testMetrics2[:, 14].mean()
     propAssigned8_test = testMetrics2[:, 15].mean()
 
-    fLog = open(save_path+'/output.csv', 'w')
+    fLog = open(args.save_path+'/output.csv', 'w')
     fLog.write(str(lr_iterations)+"\n")
     fLog.write(str(appliances)+"\n")
     fLog.write(str(windows)+"\n\n")
@@ -1425,25 +1373,25 @@ def main(args):
       d = mainloop.trainlog.monitor['mse1'][i]
       m = mainloop.trainlog.monitor['mae1'][i]
       
-      if (y_dim>1):
+      if (args.y_dim>1):
         e = mainloop.trainlog.monitor['mse2'][i]
         n = mainloop.trainlog.monitor['mae2'][i]
-      if (y_dim>2):
+      if (args.y_dim>2):
         f = mainloop.trainlog.monitor['mse3'][i]
         p = mainloop.trainlog.monitor['mae3'][i]
-      if (y_dim>3):
+      if (args.y_dim>3):
         g = mainloop.trainlog.monitor['mse4'][i]
         q = mainloop.trainlog.monitor['mae4'][i]
-      if (y_dim>4):
+      if (args.y_dim>4):
         h = mainloop.trainlog.monitor['mse5'][i]
         r = mainloop.trainlog.monitor['mae5'][i]
-      if (y_dim>5):
+      if (args.y_dim>5):
         j = mainloop.trainlog.monitor['mse6'][i]
         s = mainloop.trainlog.monitor['mae6'][i]
-      if (y_dim>6):
+      if (args.y_dim>6):
         k = mainloop.trainlog.monitor['mse7'][i]
         t = mainloop.trainlog.monitor['mae7'][i]
-      if (y_dim>7):
+      if (args.y_dim>7):
         l = mainloop.trainlog.monitor['mse8'][i]
         u = mainloop.trainlog.monitor['mae8'][i]
       fLog.write("{:d},{:.2f},{:.2f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f}\n".format(
@@ -1453,7 +1401,7 @@ def main(args):
     for batch, item in enumerate(perEnergyAssig):
       fLog.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(batch,item[0][0],item[0][1],item[0][2],item[0][3],item[0][4],item[0][5],item[0][6],item[0][7],item[1][0],item[1][1],item[1][2],item[1][3],item[1][4],item[1][5],item[1][6],item[1][7]))
 
-    f = open(save_path+'/outputRealGeneration.pkl', 'wb')
+    f = open(args.save_path+'/outputRealGeneration.pkl', 'wb')
     pickle.dump(outputGeneration, f, -1)
     f.close()
 
@@ -1465,19 +1413,13 @@ if __name__ == "__main__":
     else:
         config_file_name = 'config_AE-all.txt'
 
-    f = open(config_file_name, 'r')
-    lines = f.readlines()
-    params = OrderedDict()
+    parser = ConfigParser()
+    parser.read(config_file_name)
 
-    for line in lines:
-        line = line.split('\n')[0]
-        param_list = line.split(' ')
-        param_name = param_list[0]
-        param_value = param_list[1]
-        params[param_name] = param_value
+    args = HyperParams(parser)
 
-    params['save_path'] = params['save_path']+'/allAtOnce/'+datetime.datetime.now().strftime("%y-%m-%d_%H-%M")
-    os.makedirs(params['save_path'])
-    shutil.copy('config_AE-all.txt', params['save_path']+'/config_AE-all.txt')
-
-    main(params)
+    #params['save_path'] = params['save_path']+'/allAtOnce/'+datetime.datetime.now().strftime("%y-%m-%d_%H-%M")
+    os.makedirs(args.save_path)
+    shutil.copy('config_AE-all.txt', args.save_path+'/'+config_file_name)
+  
+    main(args)

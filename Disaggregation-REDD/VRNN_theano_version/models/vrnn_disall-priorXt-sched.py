@@ -32,7 +32,7 @@ from cle.cle.utils.gpu_op import concatenate
 from preprocessing.redd import Redd
 from preprocessing.redd_utils import fetch_redd
 
-appliances = ["fridge","dish washer", "light", "microwave"]
+appliances = ["fridge","dish washer", "light","microwave"] #if testing in 6, not using "microwave"
 # FOR HOUSE 6, OMIT DISH WASHER
 windows = {3: ("2011-04-01", "2011-05-30")} 
 def main(args):
@@ -81,6 +81,8 @@ def main(args):
     x2s_dim = 200
     y2s_dim = 200
     z2s_dim = 200
+    lr_iterations = {0:lr}
+    
     target_dim = k# As different appliances are separeted in theta_mu1, theta_mu2, etc... each one is just created from k different Gaussians
 
     model = Model()
@@ -618,8 +620,6 @@ def main(args):
         EarlyStopping(freq=monitoring_freq, path=save_path, channel=channel_name),
         WeightNorm()
     ]
-
-    lr_iterations = {0:lr}
 
     mainloop = Training(
         name=pkl_name,

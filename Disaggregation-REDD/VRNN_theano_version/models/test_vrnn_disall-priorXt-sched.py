@@ -30,10 +30,10 @@ from cle.cle.utils.compat import OrderedDict
 from cle.cle.utils.op import Gaussian_sample, GMM_sample, GMM_sampleY
 from cle.cle.utils.gpu_op import concatenate
 
-from VRNN_theano_version.datasets.redd import Redd
-from VRNN_theano_version.datasets.redd_utils import fetch_redd
+from preprocessing.redd import Redd
+from preprocessing.redd_utils import fetch_redd
 
-appliances = ["fridge","dish washer", "light", "microwave"]
+appliances = ["fridge","dish washer", "light", "microwave"]#"microwave"
 #[ 'air1', 'furnace1','refrigerator1', 'clotheswasher1','drye1','dishwasher1', 'kitchenapp1','microwave1']
 windows = {3: ("2011-04-18", "2011-05-25")}#3413:("2015-06-01", "2015-12-31")
 #windows = {6990:("2015-06-01", "2015-11-01"), 2859:("2015-06-01", "2015-11-01"), 7951:("2015-06-01", "2015-11-01"),8292:("2015-06-01",  "2015-11-01"),3413:("2015-06-01", "2015-11-01")}#3413:("2015-06-01", "2015-12-31")
@@ -50,6 +50,7 @@ def main(args):
 
     data_path = args['data_path']
     save_path = args['save_path']#+'/aggVSdisag_distrib/'+datetime.datetime.now().strftime("%y-%m-%d_%H-%M")
+    pickleModel = args['pickleModel']
     period = int(args['period'])
     n_steps = int(args['n_steps'])
     stride_train = int(args['stride_train'])
@@ -140,8 +141,7 @@ def main(args):
         mask.tag.test_value = temp
 
     #from experiment 18-05-31_18-48
-    pickelModel = '/home/gissella/Documents/Research/Disaggregation/REDD/VRNN_theano_version/output/allAtOnce/18-06-19_16-45/dp_disall-sch_1_best.pkl'
-    fmodel = open(pickelModel, 'rb')
+    fmodel = open(pickleModel, 'rb')
     mainloop = pickle.load(fmodel)
     fmodel.close()
 
@@ -488,8 +488,8 @@ def main(args):
       batchMSE = np.mean(np.absolute(predTest-realTest),axis=(1,2))
       idxMin = np.argmin(batchMSE)
 
-      print(np.asarray(idxMin).reshape(1,-1)[0,:])
-      print(batchMSE[idxMin])
+      #print(np.asarray(idxMin).reshape(1,-1)[0,:])
+      #print(batchMSE[idxMin])
       for idx in np.asarray(idxMin).reshape(1,-1)[0,:]:
 
         plt.figure(1)
@@ -554,7 +554,7 @@ def main(args):
     fLog = open(save_path+'/output.csv', 'w')
 
     #fLog.write(str(lr_iterations)+"\n")
-    fLog.write(pickelModel+"\n")
+    fLog.write(pickleModel+"\n")
     fLog.write(str(appliances)+"\n")
     fLog.write(str(windows)+"\n\n")
     fLog.write("logTest,mse1_test,mse2_test,mse3_test,mse4_test,mae1_test,mae2_test,mae3_test,mae4_test,mseTest,maeTest\n")
